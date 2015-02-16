@@ -21,13 +21,56 @@ if [[ "$(type -P brew)" ]]; then
 
   # Install Homebrew recipes.
   recipes=(
-    bash
+    bash bash-completion
+    coreutils moreutils findutils
+    autoconf automake
     ssh-copy-id
+    autossh screen
     git git-extras hub
-    tree sl id3tool cowsay
-    lesspipe nmap
-    htop-osx man2html
+    gdbm gnu-sed grc grep glib
+    gettext
+    tree sl
+    lesspipe
+    markdown pandoc
+    man2html
+    maven ant
+    mongodb
+    mysql
+    redis
+    sqlite
+    node
+    screen
+    wget
+    imagemagick --with-webp
   )
+
+  # Install Homebrew Cask recipes
+  cask_recipes=(
+    alfred
+    google-chrome
+    google-chrome-canary
+    imagealpha
+    imageoptim
+    gimp
+    iterm
+    macvim
+    sublime-text
+    the-unarchiver
+    transmission
+    virtualbox
+    vlc
+    caffeine
+    dash
+    flux
+    grandperspective
+    keepassx
+    moom
+    sequel-pro
+    sourcetree
+    textexpander
+    istat-menus
+    rescuetime
+)
 
   list="$(to_install "${recipes[*]}" "$(brew list)")"
   if [[ "$list" ]]; then
@@ -35,15 +78,16 @@ if [[ "$(type -P brew)" ]]; then
     brew install $list
   fi
 
+  casklist="$(to_install "${cask_recipes[*]}" "$(brew cask list)")"
+  if [[ "casklist" ]]; then
+    e_header "Installing Homebrew Cask and recpes: $casklist"
+    brew tap phinze/homebrew-cask
+    brew install brew-cask
+    brew cask install $casklist
+  fi
+
   # This is where brew stores its binary symlinks
   local binroot="$(brew --config | awk '/HOMEBREW_PREFIX/ {print $2}')"/bin
-
-  # htop
-  if [[ "$(type -P $binroot/htop)" && "$(stat -L -f "%Su:%Sg" "$binroot/htop")" != "root:wheel" || ! "$(($(stat -L -f "%DMp" "$binroot/htop") & 4))" ]]; then
-    e_header "Updating htop permissions"
-    sudo chown root:wheel "$binroot/htop"
-    sudo chmod u+s "$binroot/htop"
-  fi
 
   # bash
   if [[ "$(type -P $binroot/bash)" && "$(cat /etc/shells | grep -q "$binroot/bash")" ]]; then
@@ -56,9 +100,3 @@ if [[ "$(type -P brew)" ]]; then
     e_arrow "Please exit and restart all your shells."
   fi
 
-  # i don't remember why i needed this?!
-  if [[ ! "$(type -P gcc-4.2)" ]]; then
-    e_header "Installing Homebrew dupe recipe: apple-gcc42"
-    brew install https://raw.github.com/Homebrew/homebrew-dupes/master/apple-gcc42.rb
-  fi
-fi

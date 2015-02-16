@@ -136,6 +136,9 @@ fi
 if [[ ! "$(type -P git)" && "$(cat /etc/issue 2> /dev/null)" =~ Ubuntu ]]; then
   e_header "Installing Git"
   sudo apt-get -qq install git-core
+elif [[ ! "$(type -P git)" && "$(cat /etc/issue 2> /dev/null)" =~ CentOS ]]; then
+  e_header "Installing Git"
+  sudo yum -y -q install git
 fi
 
 # If Git isn't installed by now, something exploded. We gots to quit!

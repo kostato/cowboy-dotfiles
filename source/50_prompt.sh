@@ -1,143 +1,133 @@
-# My awesome bash prompt
-#
-# Copyright (c) 2012 "Cowboy" Ben Alman
-# Licensed under the MIT license.
-# http://benalman.com/about/license/
-#
-# Example:
-# [master:!?][cowboy@CowBook:~/.dotfiles]
-# [11:14:45] $
-#
-# Read more (and see a screenshot) in the "Prompt" section of
-# https://github.com/cowboy/dotfiles
+# mathisbynens shell prompt 
+# based on the Solarized Dark theme.
+# Heavily inspired by @necolas’s prompt: https://github.com/necolas/dotfiles
+# iTerm → Profiles → Text → use 13pt Monaco with 1.1 vertical spacing.
 
-# ANSI CODES - SEPARATE MULTIPLE VALUES WITH ;
-#
-#  0  reset          4  underline
-#  1  bold           7  inverse
-#
-# FG  BG  COLOR     FG  BG  COLOR
-# 30  40  black     34  44  blue
-# 31  41  red       35  45  magenta
-# 32  42  green     36  46  cyan
-# 33  43  yellow    37  47  white
-
-if [[ ! "${prompt_colors[@]}" ]]; then
-  prompt_colors=(
-    "36" # information color
-    "37" # bracket color
-    "31" # error color
-  )
-
-  if [[ "$SSH_TTY" ]]; then
-    # connected via ssh
-    prompt_colors[0]="32"
-  elif [[ "$USER" == "root" ]]; then
-    # logged in as root
-    prompt_colors[0]="35"
-  fi
+if [[ $COLORTERM = gnome-* && $TERM = xterm ]] && infocmp gnome-256color >/dev/null 2>&1
+then
+	export TERM='gnome-256color'
+elif infocmp xterm-256color >/dev/null 2>&1
+then
+	export TERM='xterm-256color'
 fi
 
-# Inside a prompt function, run this alias to setup local $c0-$c9 color vars.
-alias prompt_getcolors='prompt_colors[9]=; local i; for i in ${!prompt_colors[@]}; do local c$i="\[\e[0;${prompt_colors[$i]}m\]"; done'
+prompt_git() {
+	local s=''
+	local branchName=''
 
-# Exit code of previous command.
-function prompt_exitcode() {
-  prompt_getcolors
-  [[ $1 != 0 ]] && echo " $c2$1$c9"
+	# Check if the current directory is in a Git repository.
+	if [ $(git rev-parse --is-inside-work-tree &>/dev/null; echo "${?}") == '0' ]
+	then
+
+		# check if the current directory is in .git before running git checks
+		if [ "$(git rev-parse --is-inside-git-dir 2> /dev/null)" == 'false' ]
+		then
+
+			# Ensure the index is up to date.
+			git update-index --really-refresh -q &>/dev/null
+
+			# Check for uncommitted changes in the index.
+			if ! $(git diff --quiet --ignore-submodules --cached)
+			then
+				s+='+'
+			fi
+
+			# Check for unstaged changes.
+			if ! $(git diff-files --quiet --ignore-submodules --)
+			then
+				s+='!'
+			fi
+
+			# Check for untracked files.
+			if [ -n "$(git ls-files --others --exclude-standard)" ]
+			then
+				s+='?'
+			fi
+
+			# Check for stashed files.
+			if $(git rev-parse --verify refs/stash &>/dev/null)
+			then
+				s+='$'
+			fi
+
+		fi
+
+		# Get the short symbolic ref.
+		# If HEAD isn’t a symbolic ref, get the short SHA for the latest commit
+		# Otherwise, just give up.
+		branchName="$(git symbolic-ref --quiet --short HEAD 2> /dev/null || \
+			git rev-parse --short HEAD 2> /dev/null || \
+			echo '(unknown)')"
+
+		[ -n "${s}" ] && s=" [${s}]"
+
+		echo "${1}${branchName}${blue}${s}"
+	else
+		return
+	fi
 }
 
-# Git status.
-function prompt_git() {
-  prompt_getcolors
-  local status output flags branch
-  status="$(git status 2>/dev/null)"
-  [[ $? != 0 ]] && return;
-  output="$(echo "$status" | awk '/# Initial commit/ {print "(init)"}')"
-  [[ "$output" ]] || output="$(echo "$status" | awk '/# On branch/ {print $4}')"
-  [[ "$output" ]] || output="$(git branch | perl -ne '/^\* \(detached from (.*)\)$/ ? print "($1)" : /^\* (.*)/ && print $1')"
-  flags="$(
-    echo "$status" | awk 'BEGIN {r=""} \
-      /^# Changes to be committed:$/        {r=r "+"}\
-      /^# Changes not staged for commit:$/  {r=r "!"}\
-      /^# Untracked files:$/                {r=r "?"}\
-      END {print r}'
-  )"
-  if [[ "$flags" ]]; then
-    output="$output$c1:$c0$flags"
-  fi
-  echo "$c1[$c0$output$c1]$c9"
-}
+if tput setaf 1 &> /dev/null
+then
+	tput sgr0 # reset colors
+	bold=$(tput bold)
+	reset=$(tput sgr0)
+	# Solarized colors, taken from http://git.io/solarized-colors.
+	black=$(tput setaf 0)
+	blue=$(tput setaf 33)
+	cyan=$(tput setaf 37)
+	green=$(tput setaf 64)
+	orange=$(tput setaf 166)
+	purple=$(tput setaf 125)
+	red=$(tput setaf 124)
+	violet=$(tput setaf 61)
+	white=$(tput setaf 15)
+	yellow=$(tput setaf 136)
+else
+	bold=''
+	reset="\033[m"
+	#reset="\e[0m"
+	black="\e[1;30m"
+	blue="\e[1;34m"
+	cyan="\e[1;36m"
+	green="\e[1;32m"
+	orange="\e[1;33m"
+	purple="\e[1;35m"
+	red="\e[1;31m"
+	violet="\e[1;35m"
+	white="\e[1;37m"
+	yellow="\e[1;33m"
+fi
 
-# hg status.
-function prompt_hg() {
-  prompt_getcolors
-  local summary output bookmark flags
-  summary="$(hg summary 2>/dev/null)"
-  [[ $? != 0 ]] && return;
-  output="$(echo "$summary" | awk '/branch:/ {print $2}')"
-  bookmark="$(echo "$summary" | awk '/bookmarks:/ {print $2}')"
-  flags="$(
-    echo "$summary" | awk 'BEGIN {r="";a=""} \
-      /(modified)/     {r= "+"}\
-      /(unknown)/      {a= "?"}\
-      END {print r a}'
-  )"
-  output="$output:$bookmark"
-  if [[ "$flags" ]]; then
-    output="$output$c1:$c0$flags"
-  fi
-  echo "$c1[$c0$output$c1]$c9"
-}
+# Highlight the user name when logged in as root.
+if [[ "${USER}" == "root" ]]
+then
+	userStyle="\[${red}\]"
+else
+	userStyle="\[${orange}\]"
+fi
 
-# SVN info.
-function prompt_svn() {
-  prompt_getcolors
-  local info="$(svn info . 2> /dev/null)"
-  local last current
-  if [[ "$info" ]]; then
-    last="$(echo "$info" | awk '/Last Changed Rev:/ {print $4}')"
-    current="$(echo "$info" | awk '/Revision:/ {print $2}')"
-    echo "$c1[$c0$last$c1:$c0$current$c1]$c9"
-  fi
-}
+# Highlight the hostname when connected via SSH.
+if [[ "${SSH_TTY}" ]]
+then
+	hostStyle="\[${bold}${red}\]"
+else
+	hostStyle="\[${yellow}\]"
+fi
 
-# Maintain a per-execution call stack.
-prompt_stack=()
-trap 'prompt_stack=("${prompt_stack[@]}" "$BASH_COMMAND")' DEBUG
+# Set the terminal title to the current working directory.
+PS1="\[\033]0;\w\007\]"
+PS1+="\[${bold}\]\n" # newline
+PS1+="\[${userStyle}\]\u" # username
+PS1+="\[${white}\] at "
+PS1+="\[${hostStyle}\]\h" # host
+PS1+="\[${white}\] in "
+PS1+="\[${green}\]\w" # working directory
+PS1+="\$(prompt_git \"${white} on ${violet}\")" # Git repository details
+PS1+="\n"
+PS1+="\[${white}\]⚡  \[${reset}\]"
+#PS1+="\[${white}\]💰  \[${reset}\]"
+export PS1
 
-function prompt_command() {
-  local exit_code=$?
-  # If the first command in the stack is prompt_command, no command was run.
-  # Set exit_code to 0 and reset the stack.
-  [[ "${prompt_stack[0]}" == "prompt_command" ]] && exit_code=0
-  prompt_stack=()
-
-  # Manually load z here, after $? is checked, to keep $? from being clobbered.
-  [[ "$(type -t _z)" ]] && _z --add "$(pwd -P 2>/dev/null)" 2>/dev/null
-
-  # While the simple_prompt environment var is set, disable the awesome prompt.
-  [[ "$simple_prompt" ]] && PS1='\n$ ' && return
-
-  prompt_getcolors
-  # http://twitter.com/cowboy/status/150254030654939137
-  PS1="\n"
-  # svn: [repo:lastchanged]
-  PS1="$PS1$(prompt_svn)"
-  # git: [branch:flags]
-  PS1="$PS1$(prompt_git)"
-  # hg:  [branch:flags]
-  PS1="$PS1$(prompt_hg)"
-  # misc: [cmd#:hist#]
-  # PS1="$PS1$c1[$c0#\#$c1:$c0!\!$c1]$c9"
-  # path: [user@host:path]
-  PS1="$PS1$c1[$c0\u$c1@$c0\h$c1:$c0\w$c1]$c9"
-  PS1="$PS1\n"
-  # date: [HH:MM:SS]
-  PS1="$PS1$c1[$c0$(date +"%H$c1:$c0%M$c1:$c0%S")$c1]$c9"
-  # exit code: 127
-  PS1="$PS1$(prompt_exitcode "$exit_code")"
-  PS1="$PS1 \$ "
-}
-
-PROMPT_COMMAND="prompt_command"
+PS2="\[${yellow}\]☞ \[${reset}\]"
+export PS2

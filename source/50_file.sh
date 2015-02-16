@@ -23,7 +23,14 @@ fi
 # Easier navigation: .., ..., -
 alias ..='cd ..'
 alias ...='cd ../..'
-alias -- -='cd -'
+#alias -- -='cd -'
+
+# Shortcuts
+alias dl="cd ~/Downloads"
+alias dt="cd ~/Desktop"
+alias p="cd ~/projects"
+alias h="history"
+alias cl="clear"
 
 # File size
 alias fs="stat -f '%z bytes'"
@@ -40,7 +47,3 @@ function md() {
   mkdir -p "$@" && cd "$@"
 }
 
-# Fast directory switching
-_Z_NO_PROMPT_COMMAND=1
-_Z_DATA=~/.dotfiles/caches/.z
-. ~/.dotfiles/libs/z/z.sh

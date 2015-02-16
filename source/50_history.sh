@@ -1,5 +1,7 @@
 # History settings
 
+# Append to bash history file, rather than overwriting
+shopt -s histappend
 # Allow use to re-edit a faild history substitution.
 shopt -s histreedit
 # History expansions will be verified before execution.
