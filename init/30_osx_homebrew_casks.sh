@@ -35,6 +35,7 @@ casks=(
 #  launchbar
   macvim
   moom
+	nvalt
   omnidisksweeper
 #  race-for-the-galaxy
 #  reaper
