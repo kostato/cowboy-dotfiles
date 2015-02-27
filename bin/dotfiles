@@ -46,10 +46,10 @@ function is_ubuntu() {
   [[ "$(cat /etc/issue 2> /dev/null)" =~ Ubuntu ]] || return 1
 }
 function is_rhel() {
-  [[ "$(cat /etc/issue 2> /dev/null)" =~ Red ||  ]] || return 1
+  [[ "$(cat /etc/issue 2> /dev/null)" =~ Red ]] || return 1
 }
 function is_centos() {
-  [[ "$(cat /etc/issue 2> /dev/null)" =~ CentOS ||  ]] || return 1
+  [[ "$(cat /etc/issue 2> /dev/null)" =~ CentOS ]] || return 1
 }
 function get_os() {
   for os in osx ubuntu rhel centos; do
