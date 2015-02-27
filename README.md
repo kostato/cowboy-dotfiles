@@ -1,5 +1,6 @@
-# Dotfiles
+# Kosta's Dotfiles
 
+Forked from [Ben Allmaon's dotfiles](https://www.github.com/cowboy/dotfiles)
 My OSX / Ubuntu dotfiles.
 
 ## About this project
